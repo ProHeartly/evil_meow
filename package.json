@@ -1,0 +1,6 @@
+{
+    "name": "evil_meow",
+    "version": "1.0.0",
+    "type": "module",
+    "main": "simulate.js"
+}
