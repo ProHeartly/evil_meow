@@ -12,6 +12,12 @@ althought its working, it's preety slowww..... HOLY SHIEETT its really slowww...
 
 much better.. i think but still sloww... 
 
+HMMM I think using multi thread and worker can increase the speed of trainig! I also added a early stop setting to ensure not over working umm here we check if bot is working to improve or not.. if it isn't working for improving or stuck in same thing with micro adjustment without significant advantage, it terminates.
+
+Hmmm seems like good score 🤔 what if we increase patience lvl
+
+uhmmmmm that 2.04 seems good enoughhhh T-T.. lets try to do some small tweaks and see if i can theoritically increase thiss
+
 # okok about the how model is gonna workkk!
 
 The bot uses lookup table to choose its next move based on a dynamic state representation and we train it in kinda reinforcement style simulation :)
