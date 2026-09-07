@@ -4,6 +4,8 @@ okayy, now the simulation part is doneee!!!..... NOW lets make kinda model and a
 
 okayy, now since bot's architecture is kinda done and simulation is also kinda done, lets move to making training sim part ;D
 
+might be done with train logic
+
 
 # okok about the how model is gonna workkk!
 
