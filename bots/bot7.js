@@ -206,13 +206,8 @@ function decide(history, memory) {
 		return ["C", memory]
 	}
 
-	// Never disturb pristine cooperation UNLESS proven to be an unconditional sucker.
-	if (memory.opponentD === 0) {
-		// If we defected at round 4 (the handshake) and round 6 (periodic test), and opponent STILL has 0 defects at round 8,
-		// they are unconditional AlwaysCooperate! Farm them at 3.00 pts/round!
-		if (n >= 8 && history.filter(r => r.you === 'D').length >= 2) return ["D", memory];
-		return ["C", memory];
-	}
+	// Never disturb pristine cooperation.
+	if (memory.opponentD === 0) return ["C", memory]
 
 	if (isUnconditionalPeriodic(history)) return ["D", memory]
 

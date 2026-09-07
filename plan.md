@@ -4,8 +4,13 @@ okayy, now the simulation part is doneee!!!..... NOW lets make kinda model and a
 
 okayy, now since bot's architecture is kinda done and simulation is also kinda done, lets move to making training sim part ;D
 
-might be done with train logic
+might be done with train logic.. yah i think we are done with thisss.. now lemme do get some bots to /bots dir ;)
 
+sooo I brought out some lb bots and some other random bots so our bot can train on them :D
+
+althought its working, it's preety slowww..... HOLY SHIEETT its really slowww... I think i can optimize this into little beteter.. IT TOOK ME about 5 min to go from 150 to 200 so it will took ages in this speed
+
+much better.. i think but still sloww... 
 
 # okok about the how model is gonna workkk!
 

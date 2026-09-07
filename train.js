@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import readline from 'readline';
 import { fileURLToPath, pathToFileURL } from 'url';
 
 
@@ -38,6 +37,8 @@ function getStateKeys() {
 const STATE_KEYS = getStateKeys();
 const GENOME_LENGTH = STATE_KEYS.length;
 
+const STATE_MAP = new Map(STATE_KEYS.map((key, index) => [key, index]));
+
 function randomGenome() {
     return Array.from({ length: GENOME_LENGTH }, () => Math.random() < 0.5 ? 'C': 'D').join('');
 }
@@ -48,8 +49,7 @@ function genomeToPolicy(genome) {
     return policy;
 }
 
-async function runMatch(genome, oppBot) {
-    const policy = genomeToPolicy(genome);
+function runMatch(genome, oppBot) {
     let historyA = [];
     let historyB = [];
     let memoryB = null;
@@ -74,11 +74,12 @@ async function runMatch(genome, oppBot) {
             state = `${r1.you}${r1.opponent}_${r2.you}${r2.opponent}_${p}_${f}`;
         }
 
-        const moveA = policy[state] || 'D';
+        const idx = STATE_MAP.get(state);
+        const moveA = (idx !== undefined) ? genome[idx] : 'D';
         let moveB = 'D';
 
         try {
-            [moveB, memoryB] = await oppBot.fn({ history: historyB, memory: memoryB });
+            [moveB, memoryB] = oppBot.fn({ history: historyB, memory: memoryB });
         } catch (e) {}
 
         if (moveB === 'D') oppDCount++;
@@ -119,7 +120,7 @@ async function train() {
         for (let genome of population) {
             let totalScore = 0;
             for (let opp of opponents) {
-                totalScore += await runMatch(genome, opp);
+                totalScore += runMatch(genome, opp);
             }
             fitnessScores.push({ genome, fitness: totalScore / opponents.length})
         }
