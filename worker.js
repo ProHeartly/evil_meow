@@ -17,11 +17,10 @@ async function initWorkers() {
     }
 }
 
-function runMatchSync(genome, oppBot) {
+function runMatchSync(genome, oppBot, totalRounds) {
     let historyA = [], historyB = [];
     let memoryB = null;
     let score = 0;
-    const totalRounds = 100 + Math.floor(Math.random() * 50);
     let oppDCount = 0;
 
     for (let r = 0; r < totalRounds; r++) {
@@ -66,9 +65,11 @@ initWorkers().then(() => {
         const results = genomes.map(genome => {
             let totalScore = 0;
             for (let opp of opponents) {
-                totalScore += runMatchSync(genome, opp);
+                totalScore += runMatchSync(genome, opp, 100);
+                totalScore += runMatchSync(genome, opp, 125);
+                totalScore += runMatchSync(genome, opp, 150);
             }
-            return { genome, fitness: totalScore / opponents.length };
+            return { genome, fitness: totalScore / (opponents.length * 3) };
         });
         parentPort.postMessage(results);
     });

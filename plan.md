@@ -16,7 +16,7 @@ HMMM I think using multi thread and worker can increase the speed of trainig! I 
 
 Hmmm seems like good score 🤔 what if we increase patience lvl
 
-uhmmmmm that 2.04 seems good enoughhhh T-T.. lets try to do some small tweaks and see if i can theoritically increase thiss
+uhmmmmm that 2.04 seems good enoughhhh T-T.. lets try to do some small tweaks and see if i can theoritically increase thiss.. and lets also make rounds like 100, 125 and 150 so only strong policies survive instead of luck
 
 # okok about the how model is gonna workkk!
 
