@@ -126,7 +126,7 @@ async function train() {
 
         fitnessScores.sort((a, b) => b.fitness - a.fitness);
 
-        if (fitnessScores[0] > bestGlobalFitness) {
+        if (fitnessScores[0].fitness > bestGlobalFitness) {
             bestGlobalFitness = fitnessScores[0].fitness;
             bestGlobalGenome = fitnessScores[0].genome;
         }
