@@ -22,7 +22,7 @@ function runMatchSync(genome, oppBot, totalRounds) {
     let memoryB = null;
     let score = 0;
     let oppDCount = 0;
-    let myDcount = 0;
+    let myDCount = 0;
 
     for (let r = 0; r < totalRounds; r++) {
         let stateKey = 'START';
@@ -58,7 +58,7 @@ function runMatchSync(genome, oppBot, totalRounds) {
         } catch (e) {}
 
         if (moveB === 'D') oppDCount++;
-        if (moveA === 'D') myDcount++;
+        if (moveA === 'D') myDCount++;
 
         historyA.push({ you: moveA, opponent: moveB });
         historyB.push({ you: moveB, opponent: moveA });
