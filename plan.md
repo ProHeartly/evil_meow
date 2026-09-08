@@ -39,5 +39,3 @@ also, F is just frequency category.. (L = LOW, M = MEDIUM, H = HIGH)
 and _opp means of opponent where as _me means bot's
 
 this allows our bot to compress data into a lookup table type style and play according to it.
-
-# DISCLAMER: ITS JUST A TEST, THIS MIGHT WORK, OR WORST SCORE less than 1 cuz it didn't get trained properly..
