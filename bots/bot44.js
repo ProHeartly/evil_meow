@@ -1,23 +1,13 @@
-export default function bot({ history, memory }) {
-  memory = memory ?? {
-    betrayed: false
-  };
+export default function ({ history }) {
+    if (history.length < 2) 
+        return ["D", null]
 
-  // First round: cooperate
-  if (history.length === 0) {
-    return ["C", memory];
-  }
+    let oneback = history[history.length - 1].opponent
+    let twoback = history[history.length - 2].opponent
 
-  const last = history.at(-1).opponent;
-
-  // One defection = permanent retaliation
-  if (last === "D") {
-    memory.betrayed = true;
-  }
-
-  if (memory.betrayed) {
-    return ["D", memory];
-  }
-
-  return ["C", memory];
+    if (oneback === "D" && twoback === "D")
+        return ["D", null]; 
+    else
+        return ["C", null]; 
+    
 }

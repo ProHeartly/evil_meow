@@ -1,107 +1,5 @@
 // trained table
-const TRAINED_TABLE = {
-  "START": "C",
-  "CC": "C",
-  "CD": "C",
-  "DC": "D",
-  "DD": "D",
-  "CC_CC_P_L": "D",
-  "CC_CC_P_M": "C",
-  "CC_CC_P_H": "D",
-  "CC_CC_T_L": "C",
-  "CC_CC_T_M": "C",
-  "CC_CC_T_H": "C",
-  "CC_CD_P_L": "D",
-  "CC_CD_P_M": "D",
-  "CC_CD_P_H": "C",
-  "CC_CD_T_L": "D",
-  "CC_CD_T_M": "D",
-  "CC_CD_T_H": "C",
-  "CC_DC_P_L": "C",
-  "CC_DC_P_M": "D",
-  "CC_DC_P_H": "C",
-  "CC_DC_T_L": "D",
-  "CC_DC_T_M": "D",
-  "CC_DC_T_H": "C",
-  "CC_DD_P_L": "D",
-  "CC_DD_P_M": "C",
-  "CC_DD_P_H": "C",
-  "CC_DD_T_L": "D",
-  "CC_DD_T_M": "C",
-  "CC_DD_T_H": "D",
-  "CD_CC_P_L": "C",
-  "CD_CC_P_M": "D",
-  "CD_CC_P_H": "D",
-  "CD_CC_T_L": "C",
-  "CD_CC_T_M": "C",
-  "CD_CC_T_H": "C",
-  "CD_CD_P_L": "D",
-  "CD_CD_P_M": "D",
-  "CD_CD_P_H": "D",
-  "CD_CD_T_L": "C",
-  "CD_CD_T_M": "C",
-  "CD_CD_T_H": "D",
-  "CD_DC_P_L": "D",
-  "CD_DC_P_M": "C",
-  "CD_DC_P_H": "D",
-  "CD_DC_T_L": "C",
-  "CD_DC_T_M": "D",
-  "CD_DC_T_H": "C",
-  "CD_DD_P_L": "C",
-  "CD_DD_P_M": "D",
-  "CD_DD_P_H": "D",
-  "CD_DD_T_L": "D",
-  "CD_DD_T_M": "D",
-  "CD_DD_T_H": "D",
-  "DC_CC_P_L": "D",
-  "DC_CC_P_M": "D",
-  "DC_CC_P_H": "C",
-  "DC_CC_T_L": "C",
-  "DC_CC_T_M": "C",
-  "DC_CC_T_H": "D",
-  "DC_CD_P_L": "D",
-  "DC_CD_P_M": "C",
-  "DC_CD_P_H": "C",
-  "DC_CD_T_L": "D",
-  "DC_CD_T_M": "C",
-  "DC_CD_T_H": "D",
-  "DC_DC_P_L": "D",
-  "DC_DC_P_M": "C",
-  "DC_DC_P_H": "C",
-  "DC_DC_T_L": "D",
-  "DC_DC_T_M": "D",
-  "DC_DC_T_H": "D",
-  "DC_DD_P_L": "C",
-  "DC_DD_P_M": "C",
-  "DC_DD_P_H": "C",
-  "DC_DD_T_L": "C",
-  "DC_DD_T_M": "D",
-  "DC_DD_T_H": "D",
-  "DD_CC_P_L": "D",
-  "DD_CC_P_M": "C",
-  "DD_CC_P_H": "C",
-  "DD_CC_T_L": "D",
-  "DD_CC_T_M": "D",
-  "DD_CC_T_H": "C",
-  "DD_CD_P_L": "D",
-  "DD_CD_P_M": "D",
-  "DD_CD_P_H": "C",
-  "DD_CD_T_L": "C",
-  "DD_CD_T_M": "C",
-  "DD_CD_T_H": "C",
-  "DD_DC_P_L": "D",
-  "DD_DC_P_M": "D",
-  "DD_DC_P_H": "C",
-  "DD_DC_T_L": "C",
-  "DD_DC_T_M": "D",
-  "DD_DC_T_H": "D",
-  "DD_DD_P_L": "D",
-  "DD_DD_P_M": "C",
-  "DD_DD_P_H": "D",
-  "DD_DD_T_L": "D",
-  "DD_DD_T_M": "C",
-  "DD_DD_T_H": "D"
-};
+const TRAINED_TABLE = {}
 
 export default function bot({ history, memory }) {
     const n = history.length;
@@ -122,11 +20,15 @@ export default function bot({ history, memory }) {
         const r1 = history[n - 2];
         const r2 = history[n - 1];
 
-        const p = memory.oppDCount === 0 ? 'P' : 'T';
-        const rate = memory.oppDCount / n;
-        const f = rate <= 0.20 ? 'L' : (rate <= 0.50 ? 'M' : 'H');
+        const p_opp = memory.oppDCount === 0 ? 'P' : 'T';
+        const rate_opp = memory.oppDCount / n;
+        const f_opp = rate_opp <= 0.20 ? 'L' : (rate_opp <= 0.50 ? 'M' : 'H');
 
-        state = `${r1.you}${r1.opponent}_${r2.you}${r2.opponent}_${p}_${f}`;
+        const p_me = memory.myDCount === 0 ? 'P' : 'T';
+        const rate_me = memory.myDCount / n;
+        const f_me = rate_me <= 0.20 ? 'L' : (rate_me <= 0.50 ? 'M' : 'H');
+
+        stateKey = `${r1.you}${r1.opponent}_${r2.you}${r2.opponent}_${p_opp}_${f_opp}_${p_me}_${f_me}`;
     }
 
     const move = TRAINED_TABLE[state] || "D"; // play "D" just in case

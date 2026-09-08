@@ -1,17 +1,33 @@
-export default function bot({ history, memory }) {
-const currentRound = history.length
-if (currentRound == 0) return ["C", null]
-if (currentRound == 1) return ["D", null]
-if (currentRound == 2) return ["C", null]
-if (memory == null) {
-const opp0 = history[0].opponent
-const opp1 = history[1].opponent
-const opp2 = history[2].opponent
-// if the opponent reacted to our defection, we'll cooperate with them
-if (opp0 == "C" && opp1 == "C" && opp2 == "D")
-memory = { strategy: "C" }
-else
-memory = { strategy: "D" }
-}
-return [memory.strategy, memory]
+export default function bottle({history, memory}){
+    let n = history.length - 1
+    let move
+    let C = 0
+    let opp
+    if (history.length == 0){
+        move = "C"
+    }
+    else{
+        opp = history[n].opponent
+        if(opp == "C"){
+            C += 1
+        }
+
+        if(memory > 0&&C > 2){
+            move = "C"
+            memory = 0
+            C = 0
+        }
+        else if (memory > 0){    
+            move = "D"
+        }
+        else if(opp == "C"){
+            move = "C"
+        }
+        else if (opp == "D"){
+           move = "D"
+           memory = 1
+        }
+        
+    }
+    return [move, memory]
 }

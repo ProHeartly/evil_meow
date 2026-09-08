@@ -18,6 +18,8 @@ Hmmm seems like good score 🤔 what if we increase patience lvl
 
 uhmmmmm that 2.04 seems good enoughhhh T-T.. lets try to do some small tweaks and see if i can theoritically increase thiss.. and lets also make rounds like 100, 125 and 150 so only strong policies survive instead of luck
 
+let's add a small feature.. allowing the bot to understand its own behaviour and develop more advanced strategy
+
 # okok about the how model is gonna workkk!
 
 The bot uses lookup table to choose its next move based on a dynamic state representation and we train it in kinda reinforcement style simulation :)
@@ -28,11 +30,13 @@ rount 2+: constructs a 7-part state string combining recent history and opponent
 
 the state formula: (for rounds n >= 2)
 
-'{round n - 2}_\{round n - 1}\_{P}\_{F}'
+'{round n - 2}_\{round n - 1}\_{P\_opp}\_{F\_opp}\_{P\_me}\_{F\_me}'
 
 where, round data are stored like CC.. first string denotes you and second opponent
 and, P means purity flag (P = Pure/forgiving, T = Tainted/Punishing)
 also, F is just frequency category.. (L = LOW, M = MEDIUM, H = HIGH)
+
+and _opp means of opponent where as _me means bot's
 
 this allows our bot to compress data into a lookup table type style and play according to it.
 

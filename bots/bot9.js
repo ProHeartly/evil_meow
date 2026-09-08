@@ -1,144 +1,188 @@
-export default function bot({ history = [], memory }) {
-    try {
-        const t = history.length;
-        const mem = memory ?? {
-            olivesSent: 0,
-            dStreak: 0,
-            probed: false,
-            armed: false,
-            siphoning: false,
-        };
+export default function bot(state) {
+  const C = "C", D = "D";
+  const CFG = {
+    window: 24,          // rounds of recent behaviour used for conditional rates
+    tolerate: 4,         // opening defections absorbed from a D-opener
+    coopFloor: 0.55,     // P(they C | we C) below which the relationship is dead
+    exploitFloor: 0.75,  // P(they C | we D) above which they don't punish
+    olives: [2, 6, 16, 40, 90],
+    maxSucker: 4,
+    maxExits: 2
+  };
+  let hist = null;
 
-        //everything is fair in love and war
-        if (t >= 118) return ["D", mem];
-        
-        if (t === 0) return ["C", mem];
-        const last =history[t - 1];
-        const prev = t >=2 ? history[t - 2] : null;
+  try {
+    const raw = state && Array.isArray(state.history) ? state.history : [];
+    const n = raw.length;
+    hist = raw;
+    const m = loadMem(state ? state.memory : null);
+    if (n === 0) return out(C, m);
 
-        mem.dStreak = (last.you === "D" && last.opponent === "D") ? mem.dStreak + 1 : 0;
-        
-        // bot gives D up to 3 rounds to see if opponent is conditional
-        const allOurMovesC = history.every(r => r.you === "C");
-        if (history[0].opponent === "D" && allOurMovesC) {
-            if(last.opponent === "C" || t < 3) return ["C", mem];
-        }
+    /* ---------- single statistics pass ---------- */
+    let oppD = 0, myD = 0, cAfterC = 0, nAfterC = 0, cAfterD = 0, nAfterD = 0;
+    let sucker = 0, recPts = 0, recN = 0;
+    const w0 = n - CFG.window > 0 ? n - CFG.window : 0;
+    const s0 = n - 10 > 0 ? n - 10 : 0;
+    for (let i = 0; i < n; i++) {
+      const o = opp(i), y = you(i);
+      if (o === D) oppD++;
+      if (y === D) myD++;
+      if (i >= w0 && i > 0) {
+        if (you(i - 1) === C) { nAfterC++; if (o === C) cAfterC++; }
+        else { nAfterD++; if (o === C) cAfterD++; }
+      }
+      if (i >= s0) {
+        if (y === C && o === D) sucker++;
+        recN++; recPts += y === C ? (o === C ? 2 : 0) : (o === C ? 3 : 1);
+      }
+    }
+    let mutualD = 0;
+    for (let i = n - 1; i >= 0 && you(i) === D && opp(i) === D; i--) mutualD++;
+    let mutualC = 0;
+    for (let i = n - 1; i >= 0 && you(i) === C && opp(i) === C; i--) mutualC++;
+    if (mutualC >= 8) m.olive = 0;          // peace restored: refill the budget
+    const pC = (cAfterC + 0.5) / (nAfterC + 1);   // they cooperate when we cooperate
+    const pD = (cAfterD + 0.5) / (nAfterD + 1);   // they cooperate even when we defect
+    const oppRate = oppD / n;
+    const vNow = recN ? recPts / recN : 2;
 
-        //inspiration 001
-        const firstD = history.findIndex(r => r.opponent === "D");
-        if (firstD !== -1 && (t - firstD >= 4)) {
-            const neverForgave = history.slice(firstD).every(r => r.opponent === "D");
-            if (neverForgave) return ["D", mem];
-        }
+    const lastOpp = opp(n - 1), lastYou = you(n - 1);
+    const prevYou = n >= 2 ? you(n - 2) : C;
 
-        //to shut down alternat moves exploit bot :/
-        if (t >= 14 && isRigidPattern(history)) {
-            return ["D", mem];
-        }
-
-        //round 7 to see TF2T & other nice and simple bots :|
-        const oppEverD = history.some(r => r.opponent === "D");
-        if (t === 7 && !oppEverD && !mem.probed) {
-            mem.probed = true;
-            return ["D", mem];
-        }
-
-        //Lets see feedback :)
-        if (mem.probed && !mem.armed && !mem.siphoning) {
-            if (t === 8) {
-                return ["C", mem];
-            }
-            if (t === 9) {
-                if (last.opponent === "D") {
-                    mem.armed = true;
-                }else {
-                    mem.siphoning = true;
-                }
-                return ["C", mem];
-            }
-        }
-
-        //some harvesting system :@
-        if (mem.siphoning) {
-            if (last.opponent === "D") {
-                mem.siphoning = false;
-                return ["C", mem];
-            }
-            return [t % 2 === 0 ? "D" : "C", mem];
-        }
-
-        if (!oppEverD) return ["C", mem];
-
-        const { pC, pD, samplesAfterD } = getRecentState(history, 12);
-        const oppDRate = history.filter(r => r.opponent === "D").length / t;
-
-        //nasty play i defect if they never punish D :#
-        if (samplesAfterD >= 3 && pD >= 0.45 && oppDRate < 0.35) {
-            return ["D", mem];
-        }
-
-        //coop with tit for tat bots
-        if (pC >= 0.6) {
-            const weProvokedThem = last.opponent === "D" && prev?.you === "D";
-            if (last.opponent === "D" && !weProvokedThem) return ["D", mem];
-            return ["C", mem];
-        }
-
-        const ladder = [2, 5, 10, 20];
-        const oppEverC = history.some(r => r.opponent === "C");
-        if (oppEverC && mem.olivesSent < ladder.length && mem.dStreak >= ladder[mem.olivesSent]) {
-            mem.olivesSent++;
-            return ["C", mem];
-        }
-
-        return ["D", mem];
-       } catch {
-        return ["D", null];
-       }
+    /* ---------- 1. absorb a hostile opening ----------
+       Several bots in this field open with D and then grudge forever if you
+       ever hit back. Staying clean through the opening unlocks them. */
+    if (opp(0) === D && myD === 0) {
+      // a grudger-opener that starts cooperating never stops; anything that
+      // cooperates and then defects again is a prober, so stop paying at once
+      let seenC = false, relapse = false;
+      for (let i = 0; i < n; i++) {
+        if (opp(i) === C) seenC = true;
+        else if (seenC) { relapse = true; break; }
+      }
+      if (!relapse && (n <= CFG.tolerate || lastOpp === C)) return out(C, m);
     }
 
-    function getRecentState(history, windowSize) {
-        let cAfterC = 0, nC = 0;
-        let cAfterD = 0, nD = 0;
-        const start = Math.max(1, history.length - windowSize);
+    /* ---------- 2. never disturb a clean relationship ---------- */
+    if (oppD === 0) return out(C, m);
 
-        for (let i = start; i < history.length; i++) {
-          const myPrev = history[i - 1].you;
-          const theirMove = history[i].opponent;
+    /* ---------- 3. fixed patterns that ignore us ---------- */
+    if (isPeriodic(n)) return out(D, m);
 
-          if (myPrev === "C") {
-            nC++;
-            if (theirMove === "C") cAfterC++;
-          } else {
-            nD++;
-            if (theirMove === "C") cAfterD++;
-          }
+    /* ---------- 4. they don't punish defection: take it ----------
+       Evidence here is free — it comes from rounds we retaliated, never from
+       an unprovoked probe. Alternating keeps two-strike bots asleep. */
+    if (nAfterD >= 3 && pD >= CFG.exploitFloor && oppRate < 0.35 && lastYou === C) {
+      return out(D, m);
+    }
+
+    /* ---------- 5. hostile classification, and it sticks ----------
+       Once we start defecting, our own moves stop generating the evidence
+       that proved them hostile. Recomputing from a window would quietly
+       exonerate them and send us back to cooperating, so the verdict is
+       stored and only a positive signal from them overturns it. */
+    const unresponsive = nAfterC >= 4 && nAfterD >= 3 &&
+                         Math.abs(pC - pD) < 0.25 && oppRate > 0.2;
+    const parasitic = (nAfterC >= 4 && pC < CFG.coopFloor) ||
+                      (n >= 12 && sucker >= CFG.maxSucker) ||
+                      (n >= 10 && oppRate > 0.85);
+    if (unresponsive || parasitic) {
+      m.hard = 1;
+      if (unresponsive) m.unresp = 1;
+    }
+
+    if (m.hard) {
+      if (m.oliveAt >= 0) {
+        if (n < m.oliveAt + 2) return out(C, m);            // hold the branch open
+        const taken = opp(m.oliveAt + 1) === C;
+        m.oliveAt = -1;
+        if (taken && m.exits < CFG.maxExits) {
+          m.exits++; m.hard = 0; m.unresp = 0; m.olive = 0;
+          return out(C, m);
         }
-
-        return {
-            pC: (cAfterC + 0.5) / (nC + 1),
-            pD: (cAfterD + 0.5) / (nD + 1),
-            samplesAfterD: nD,
-        };
       }
-      
-      function isRigidPattern(history) {
-        const window = history.slice(-20);
-        const moves = window.map(r => r.opponent);
-        if (!moves.includes("C") || !moves.includes("D")) return false;
-
-        for (let span = 2; span <= 6; span++) {
-            let periodic = true;
-            for (let i = span; i < moves.length; i++) {
-                if (moves[i] !== moves[i - span]) {
-                    periodic = false;
-                    break;
-                }
-            }
-            if (periodic) {
-                const isEchoingUs = window.slice(1).every((r, idx) => r.opponent === window[idx].you);
-                if (!isEchoingUs) return true;
-            }
-          }
-          return false;
+      // the other way back: a run of cooperation from them that we didn't buy
+      const need = m.unresp ? 8 : 5;
+      if (m.exits < CFG.maxExits && n >= need) {
+        let allC = true;
+        for (let i = n - need; i < n; i++) if (opp(i) !== C) { allC = false; break; }
+        if (allC) {
+          m.exits++; m.hard = 0; m.unresp = 0; m.olive = 0;
+          return out(C, m);
+        }
       }
+      // uncorrelated opponents get no olive branches: there is nothing to repair
+      if (!m.unresp && m.exits < CFG.maxExits && oppD < n &&
+          m.olive < CFG.olives.length && mutualD >= CFG.olives[m.olive]) {
+        m.olive++; m.oliveAt = n;
+        return out(C, m);
+      }
+      return out(D, m);
+    }
+
+    /* ---------- 6. core: strict, contrite tit-for-tat ---------- */
+    if (lastOpp === D) {
+      // break a deadlock on a widening schedule rather than forgiving freely:
+      // constant forgiveness is what marks you as farmable to half this field
+      if (lastYou === D) {
+        if (m.olive < CFG.olives.length && mutualD >= CFG.olives[m.olive]) {
+          m.olive++;
+          return out(C, m);
+        }
+        return out(D, m);
+      }
+      if (prevYou === D) return out(C, m);                  // their hit answered ours
+      return out(D, m);                                     // unprovoked: answer at once
+    }
+    return out(C, m);
+
+  } catch (err) {
+    try {
+      const hs = state && state.history;
+      const l = hs && hs.length ? hs[hs.length - 1] : null;
+      const v = l && l.opponent;
+      return [typeof v === "string" && v.charAt(0).toUpperCase() === "D" ? "D" : "C",
+              (state && state.memory) || null];
+    } catch (e2) { return ["C", null]; }
+  }
+
+  function isPeriodic(n) {
+    if (n < 12) return false;
+    const from = n - 20 > 0 ? n - 20 : 0;
+    let sawC = false, sawD = false;
+    for (let i = from; i < n; i++) { if (opp(i) === C) sawC = true; else sawD = true; }
+    if (!sawC || !sawD) return false;
+    for (let p = 2; p <= 6; p++) {
+      let ok = true, checks = 0;
+      for (let i = from + p; i < n; i++) {
+        checks++;
+        if (opp(i) !== opp(i - p)) { ok = false; break; }
+      }
+      if (!ok || checks < 8) continue;
+      // if the same sequence is just them mirroring us, it isn't unconditional
+      for (let i = from > 1 ? from : 1; i < n; i++) if (opp(i) !== you(i - 1)) return true;
+    }
+    return false;
+  }
+
+  function mv(v) {
+    if (v === D) return D;
+    if (typeof v === "string" && v.length && v.charAt(0).toUpperCase() === "D") return D;
+    return C;
+  }
+  function you(i) { const r = hist[i]; return r ? mv(r.you) : C; }
+  function opp(i) { const r = hist[i]; return r ? mv(r.opponent) : C; }
+
+  function loadMem(raw) {
+    const base = { olive: 0, hard: 0, unresp: 0, exits: 0, oliveAt: -1 };
+    if (raw && typeof raw === "object") {
+      for (const k of ["olive", "hard", "unresp", "exits", "oliveAt"]) {
+        const v = raw[k];
+        if (typeof v === "number" && isFinite(v)) base[k] = v;
+      }
+      if (base.olive < 0) base.olive = 0;
+    }
+    return base;
+  }
+  function out(move, m) { return [move === D ? D : C, m]; }
+}

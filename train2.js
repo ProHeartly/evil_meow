@@ -7,9 +7,31 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const POPULATION_SIZE = 200;
+const POPULATION_SIZE = 500;
 const GENERATIONS = 6000;
-const MUTATION_RATE = 0.03;
+
+const MAX_MUTATION_RATE = 0.08;
+const MIN_MUTATION_RATE = 0.005;
+
+function uniformCrossover(parent1, parent2, genomeLength) {
+    let child = '';
+    for (let i = 0; i < genomeLength; i++) {
+        child += (Math.random() < 0.5) ? parent1[i] : parent2[i];
+    }
+    return child;
+}
+
+function mutate(genome, mutationRate) {
+    let mutated = '';
+    for (let i = 0; i < genome.length; i++) {
+        if (Math.random() < mutationRate) {
+            mutated += (genome[i] === 'C') ? 'D' : 'C';
+        } else {
+            mutated += genome[i];
+        }
+    }
+    return mutated;
+}
 
 const PATIENCE = 500;
 const MIN_DELTA = 0.001;
@@ -23,8 +45,10 @@ function getStateKeys() {
 
     moves.forEach(m1 => moves.forEach(o1 => 
         moves.forEach(m2 => moves.forEach(o2 => 
-            pure.forEach(p => freq.forEach(f => 
-                keys.push(`${m1}${o1}_${m2}${o2}_${p}_${f}`)
+            pure.forEach(p_opp => freq.forEach(f_opp => 
+                pure.forEach(p_me => freq.forEach(f_me => 
+                    keys.push(`${m1}${o1}_${m2}${o2}_${p_opp}_${f_opp}_${p_me}_${f_me}`)
+                ))
             ))
         ))
     ));
@@ -74,7 +98,12 @@ async function trainMultiThreaded() {
 
     const startTime = Date.now();
 
-    for (let gen = 0; gen < GENERATIONS; gen++) {
+    for (let gen = 1; gen < GENERATIONS; gen++) {
+        const currentMutationRate = Math.max(
+            MIN_MUTATION_RATE,
+            MAX_MUTATION_RATE * (1 - (gen / GENERATIONS))
+        );
+
         const chunkSize = Math.ceil(POPULATION_SIZE / numThreads);
         const promises = workers.map((worker, index) => {
             return new Promise((resolve) => {
@@ -100,7 +129,7 @@ async function trainMultiThreaded() {
             patienceCounter++;
         }
 
-        if (gen % 50 === 0 || gen === 0) {
+        if (gen % 50 === 0 || gen === 1) {
             const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
             console.log(`[GEN ${gen}] Best: ${currentBest.toFixed(4)} | Global Peak: ${bestGlobalFitness.toFixed(4)} | Time: ${elapsed}s | Patience: ${patienceCounter}/${PATIENCE}`);
         }
@@ -120,12 +149,14 @@ async function trainMultiThreaded() {
             const parent1 = tournamentSelect(fitnessScores);
             const parent2 = tournamentSelect(fitnessScores);
 
-            const crossPoint = Math.floor(Math.random() * GENOME_LENGTH);
-            let child = parent1.substring(0, crossPoint) + parent2.substring(crossPoint);
+            let child = '';
+            for (let k = 0; k < GENOME_LENGTH; k++) {
+                child += (Math.random() < 0.5) ? parent1[k] : parent2[k];
+            }
 
             let mutatedChild = '';
             for (let a = 0; a < child.length; a++) {
-                mutatedChild += (Math.random() < MUTATION_RATE) ? (child[a] === 'C' ? 'D' : 'C') : child[a];
+                mutatedChild += (Math.random() < currentMutationRate) ? (child[a] === 'C' ? 'D' : 'C') : child[a];
             }
             nextGen.push(mutatedChild);
         }

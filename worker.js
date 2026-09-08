@@ -22,6 +22,7 @@ function runMatchSync(genome, oppBot, totalRounds) {
     let memoryB = null;
     let score = 0;
     let oppDCount = 0;
+    let myDcount = 0;
 
     for (let r = 0; r < totalRounds; r++) {
         let stateKey = 'START';
@@ -30,10 +31,16 @@ function runMatchSync(genome, oppBot, totalRounds) {
         } else if (r >= 2) {
             const r1 = historyA[r - 2];
             const r2 = historyA[r - 1];
-            const p = oppDCount === 0 ? 'P' : 'T';
-            const rate = oppDCount / r;
-            const f = rate <= 0.20 ? 'L' : (rate <= 0.50 ? 'M' : 'H');
-            stateKey = `${r1.you}${r1.opponent}_${r2.you}${r2.opponent}_${p}_${f}`;
+
+            const p_opp = oppDCount === 0 ? 'P' : 'T';
+            const rate_opp = oppDCount / r;
+            const f_opp = rate_opp <= 0.20 ? 'L' : (rate_opp <= 0.50 ? 'M' : 'H');
+
+            const p_me = myDCount === 0 ? 'P' : 'T';
+            const rate_me = myDCount / r;
+            const f_me = rate_me <= 0.20 ? 'L' : (rate_me <= 0.50 ? 'M' : 'H');
+
+            stateKey = `${r1.you}${r1.opponent}_${r2.you}${r2.opponent}_${p_opp}_${f_opp}_${p_me}_${f_me}`;
         }
 
         const idx = STATE_MAP.get(stateKey);
@@ -51,6 +58,7 @@ function runMatchSync(genome, oppBot, totalRounds) {
         } catch (e) {}
 
         if (moveB === 'D') oppDCount++;
+        if (moveA === 'D') myDcount++;
 
         historyA.push({ you: moveA, opponent: moveB });
         historyB.push({ you: moveB, opponent: moveA });

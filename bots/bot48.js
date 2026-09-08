@@ -1,29 +1,48 @@
-export default function bot({ history, memory}) {
-    memory = memory ?? { OpponentDefected: false, counter: 0 }
-    let move = "C"
-    
-    const lastOpponentMove = history.at(-1)?.opponent
-
-    if (lastOpponentMove === "D") {
-        memory.OpponentDefected = true
+export default function bot({ history, memory }) {
+    if (!memory) {
+        memory = {
+            testSequence: ["C", "D", "C"],
+            opponentType: null,
+        };
     }
 
-    if (lastOpponentMove === "C") {
-        memory.OpponentDefected = false
+    const currentRound = history.length;
+
+    if (currentRound < 3) {
+        const move = memory.testSequence[currentRound];
+        return [move, memory];
     }
 
-    if (memory.OpponentDefected === true && memory.counter < 1) {
-        move = "C"
-        memory.counter = 1
-    } else if (memory.OpponentDefected === true && memory.counter >= 1) {
-        move = "D"
-    } else if (memory.OpponentDefected === false && memory.counter < 1) {
-        move = "C"
-    } else if (memory.OpponentDefected === false && memory.counter >= 1) {
-        move = "D"
-        memory.counter = 0
+    if (!memory.opponentType) {
+        const opp0 = history[0].opponent;
+        const opp1 = history[1].opponent;
+        const opp2 = history[2].opponent;
+
+        if (opp0 === "C" && opp1 === "C" && opp2 === "C") {
+            memory.opponentType = "BISOUNOURS";
+        } else if (opp0 === "D" && opp1 === "D" && opp2 === "D") {
+            memory.opponentType = "MECHANT";
+        } else {
+            memory.opponentType = "REACTIF";
+        }
     }
 
-    return [move, memory] //lets hope its correct this time atleast :sob:
+    let nextMove = "C";
 
+    switch (memory.opponentType) {
+        case "BISOUNOURS":
+            nextMove = "D";
+            break;
+
+        case "MECHANT":
+            nextMove = "D";
+            break;
+
+        case "REACTIF":
+            const lastOpponentMove = history.at(-1).opponent;
+            nextMove = lastOpponentMove;
+            break;
+    }
+
+    return [nextMove, memory];
 }
